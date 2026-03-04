@@ -6,168 +6,173 @@
 <title>PresençaQR</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  :root {
-    --bg: #0a0f1e; --surface: #111827; --surface2: #1a2236;
-    --accent: #00e5a0; --accent2: #0ea5e9; --danger: #f43f5e;
-    --text: #e2e8f0; --muted: #64748b; --border: #1e2d45;
-    --font: 'Syne', sans-serif; --mono: 'DM Mono', monospace;
-  }
-  body { font-family: var(--font); background: var(--bg); color: var(--text); min-height: 100vh; overflow-x: hidden; }
-  body::before { content: ''; position: fixed; inset: 0; background-image: linear-gradient(rgba(0,229,160,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(0,229,160,0.03) 1px, transparent 1px); background-size: 40px 40px; pointer-events: none; z-index: 0; }
-  .container { max-width: 1100px; margin: 0 auto; padding: 2rem 1.5rem; position: relative; z-index: 1; }
-  header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 3rem; padding-bottom: 1.5rem; border-bottom: 1px solid var(--border); }
-  .logo { display: flex; align-items: center; gap: 0.75rem; }
-  .logo-icon { width: 40px; height: 40px; background: var(--accent); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
-  .logo-text { font-size: 1.3rem; font-weight: 800; }
-  .logo-text span { color: var(--accent); }
-  .badge { font-family: var(--mono); font-size: 0.7rem; background: rgba(0,229,160,0.1); color: var(--accent); border: 1px solid rgba(0,229,160,0.3); padding: 0.3rem 0.8rem; border-radius: 20px; letter-spacing: 1px; }
-  .tabs { display: flex; gap: 0.5rem; margin-bottom: 2rem; background: var(--surface); padding: 0.4rem; border-radius: 12px; width: fit-content; border: 1px solid var(--border); }
-  .tab { padding: 0.6rem 1.4rem; border-radius: 8px; border: none; background: transparent; color: var(--muted); font-family: var(--font); font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: all 0.2s; }
-  .tab.active { background: var(--accent); color: #0a0f1e; }
-  .tab:hover:not(.active) { color: var(--text); }
-  .panel { display: none; }
-  .panel.active { display: block; animation: fadeIn 0.3s ease; }
-  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 1.8rem; margin-bottom: 1.5rem; }
-  .card-title { font-size: 0.75rem; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--accent); margin-bottom: 1.2rem; }
-  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
-  .form-group { display: flex; flex-direction: column; gap: 0.5rem; }
-  label { font-size: 0.78rem; font-weight: 600; color: var(--muted); letter-spacing: 0.5px; text-transform: uppercase; }
-  input, select { background: var(--surface2); border: 1px solid var(--border); color: var(--text); font-family: var(--mono); font-size: 0.9rem; padding: 0.75rem 1rem; border-radius: 10px; outline: none; transition: border-color 0.2s; }
-  input:focus, select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(0,229,160,0.1); }
-  select option { background: var(--surface2); }
-  .btn { padding: 0.85rem 2rem; border-radius: 10px; border: none; font-family: var(--font); font-size: 0.9rem; font-weight: 700; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; gap: 0.5rem; }
-  .btn-primary { background: var(--accent); color: #0a0f1e; }
-  .btn-primary:hover { background: #00ffa8; transform: translateY(-1px); box-shadow: 0 4px 20px rgba(0,229,160,0.4); }
-  .btn-secondary { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
-  .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
-  .btn-danger { background: rgba(244,63,94,0.1); color: var(--danger); border: 1px solid rgba(244,63,94,0.3); }
-  .btn-sm { padding: 0.4rem 0.9rem; font-size: 0.78rem; }
-  .qr-layout { display: grid; grid-template-columns: auto 1fr; gap: 2rem; align-items: start; }
-  .qr-box { background: #fff; padding: 1rem; border-radius: 16px; display: flex; align-items: center; justify-content: center; min-width: 200px; min-height: 200px; }
-  .qr-info { display: flex; flex-direction: column; gap: 1rem; }
-  .qr-meta { background: var(--surface2); border-radius: 12px; padding: 1rem 1.2rem; border: 1px solid var(--border); }
-  .qr-meta-row { display: flex; justify-content: space-between; align-items: center; padding: 0.4rem 0; border-bottom: 1px solid var(--border); font-size: 0.85rem; }
-  .qr-meta-row:last-child { border-bottom: none; }
-  .qr-meta-row .key { color: var(--muted); font-family: var(--mono); }
-  .qr-meta-row .val { font-weight: 600; }
-  .timer-box { background: var(--surface2); border-radius: 12px; padding: 1rem 1.2rem; border: 1px solid var(--border); }
-  .timer-display { font-family: var(--mono); font-size: 2.5rem; font-weight: 500; color: var(--accent); letter-spacing: 2px; line-height: 1; }
-  .timer-label { font-size: 0.72rem; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-top: 0.3rem; }
-  .timer-expired { color: var(--danger) !important; }
-  .url-field { background: var(--surface2); border: 1px dashed var(--border); border-radius: 10px; padding: 0.75rem 1rem; font-family: var(--mono); font-size: 0.72rem; color: var(--accent); word-break: break-all; line-height: 1.5; }
-  .actions { display: flex; gap: 0.75rem; flex-wrap: wrap; }
-  .stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 1.5rem; }
-  .stat-card { background: var(--surface2); border: 1px solid var(--border); border-radius: 12px; padding: 1.2rem; text-align: center; }
-  .stat-num { font-size: 2rem; font-weight: 800; line-height: 1; margin-bottom: 0.3rem; }
-  .stat-lbl { font-size: 0.72rem; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
-  .table-wrap { overflow-x: auto; }
-  table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
-  thead th { font-size: 0.7rem; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); padding: 0.8rem 1rem; text-align: left; border-bottom: 1px solid var(--border); }
-  tbody tr { border-bottom: 1px solid rgba(30,45,69,0.5); transition: background 0.15s; }
-  tbody tr:hover { background: var(--surface2); }
-  tbody td { padding: 0.85rem 1rem; font-family: var(--mono); font-size: 0.83rem; }
-  .status-badge { display: inline-flex; align-items: center; gap: 0.35rem; font-size: 0.72rem; font-weight: 700; padding: 0.25rem 0.7rem; border-radius: 20px; font-family: var(--font); }
-  .status-ok { background: rgba(0,229,160,0.1); color: var(--accent); border: 1px solid rgba(0,229,160,0.3); }
-  .status-late { background: rgba(251,191,36,0.1); color: #fbbf24; border: 1px solid rgba(251,191,36,0.3); }
-  .sessions-list { display: flex; flex-direction: column; gap: 0.75rem; }
-  .session-item { display: flex; align-items: center; justify-content: space-between; background: var(--surface2); border: 1px solid var(--border); border-radius: 12px; padding: 1rem 1.2rem; cursor: pointer; transition: all 0.2s; }
-  .session-item:hover, .session-item.selected { border-color: var(--accent); background: rgba(0,229,160,0.05); }
-  .session-info { display: flex; flex-direction: column; gap: 0.2rem; }
-  .session-name { font-weight: 700; font-size: 0.95rem; }
-  .session-date { font-family: var(--mono); font-size: 0.78rem; color: var(--muted); }
-  .session-count { font-family: var(--mono); font-size: 0.85rem; color: var(--accent); font-weight: 500; }
-  .empty { text-align: center; padding: 3rem; color: var(--muted); }
-  .empty-icon { font-size: 3rem; margin-bottom: 1rem; opacity: 0.4; }
-  .empty-text { font-size: 0.9rem; }
-
-  /* TELA DO ALUNO */
-  #aluno-screen { display: none; min-height: 100vh; align-items: center; justify-content: center; padding: 2rem; }
-  #aluno-screen.visible { display: flex; flex-direction: column; }
-  .aluno-card { background: var(--surface); border: 2px solid var(--accent); border-radius: 20px; padding: 2.2rem; width: 100%; max-width: 420px; box-shadow: 0 0 60px rgba(0,229,160,0.15); }
-  .aula-info-box { background: var(--surface2); border-radius: 12px; padding: 1rem 1.2rem; margin-bottom: 1.5rem; border: 1px solid var(--border); }
-  .aula-info-row { display: flex; justify-content: space-between; padding: 0.35rem 0; font-size: 0.84rem; border-bottom: 1px solid var(--border); }
-  .aula-info-row:last-child { border-bottom: none; }
-  .aula-info-row .k { color: var(--muted); }
-  .aula-info-row .v { font-weight: 700; }
-  .expired-banner { background: rgba(244,63,94,0.1); border: 1px solid rgba(244,63,94,0.4); border-radius: 12px; padding: 1.2rem; text-align: center; color: var(--danger); font-weight: 700; margin-bottom: 1rem; font-size: 0.9rem; }
-  .aluno-field { display: flex; flex-direction: column; gap: 0.4rem; margin-bottom: 1rem; }
-  .aluno-field label { font-size: 0.75rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
-  .aluno-field input { background: var(--surface2); border: 1px solid var(--border); color: var(--text); font-family: var(--mono); font-size: 0.95rem; padding: 0.75rem 1rem; border-radius: 10px; outline: none; width: 100%; }
-  .aluno-field input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(0,229,160,0.1); }
-
-  .toast { position: fixed; bottom: 2rem; right: 2rem; background: var(--accent); color: #0a0f1e; font-family: var(--font); font-weight: 700; font-size: 0.875rem; padding: 0.9rem 1.5rem; border-radius: 12px; z-index: 1000; transform: translateY(100px); opacity: 0; transition: all 0.3s cubic-bezier(0.34,1.56,0.64,1); }
-  .toast.show { transform: translateY(0); opacity: 1; }
-  .toast.error { background: var(--danger); color: #fff; }
-
-  @media (max-width: 680px) {
-    .form-grid { grid-template-columns: 1fr; }
-    .qr-layout { grid-template-columns: 1fr; }
-    .qr-box { margin: 0 auto; }
-    .stats-row { grid-template-columns: 1fr 1fr; }
-    header { flex-direction: column; gap: 1rem; align-items: flex-start; }
-  }
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#0a0f1e;--surface:#111827;--surface2:#1a2236;--accent:#00e5a0;--accent2:#0ea5e9;--danger:#f43f5e;--warn:#fbbf24;--text:#e2e8f0;--muted:#64748b;--border:#1e2d45;--font:'Syne',sans-serif;--mono:'DM Mono',monospace}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(0,229,160,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(0,229,160,.03) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0}
+#loading-screen{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:999;gap:1rem}
+.spinner{width:40px;height:40px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+#loading-screen p{color:var(--muted);font-size:.85rem;font-family:var(--mono)}
+.container{max-width:1100px;margin:0 auto;padding:2rem 1.5rem;position:relative;z-index:1}
+header{display:flex;align-items:center;justify-content:space-between;margin-bottom:3rem;padding-bottom:1.5rem;border-bottom:1px solid var(--border)}
+.logo{display:flex;align-items:center;gap:.75rem}
+.logo-icon{width:40px;height:40px;background:var(--accent);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.2rem}
+.logo-text{font-size:1.3rem;font-weight:800}
+.logo-text span{color:var(--accent)}
+.badge{font-family:var(--mono);font-size:.7rem;background:rgba(0,229,160,.1);color:var(--accent);border:1px solid rgba(0,229,160,.3);padding:.3rem .8rem;border-radius:20px;letter-spacing:1px}
+.badge-live{background:rgba(244,63,94,.1);color:var(--danger);border-color:rgba(244,63,94,.3);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+.tabs{display:flex;gap:.5rem;margin-bottom:2rem;background:var(--surface);padding:.4rem;border-radius:12px;width:fit-content;border:1px solid var(--border)}
+.tab{padding:.6rem 1.4rem;border-radius:8px;border:none;background:transparent;color:var(--muted);font-family:var(--font);font-size:.85rem;font-weight:600;cursor:pointer;transition:all .2s}
+.tab.active{background:var(--accent);color:#0a0f1e}
+.tab:hover:not(.active){color:var(--text)}
+.panel{display:none}
+.panel.active{display:block;animation:fadeIn .3s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:1.8rem;margin-bottom:1.5rem}
+.card-title{font-size:.75rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--accent);margin-bottom:1.2rem}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+.form-group{display:flex;flex-direction:column;gap:.5rem}
+label{font-size:.78rem;font-weight:600;color:var(--muted);letter-spacing:.5px;text-transform:uppercase}
+input,select{background:var(--surface2);border:1px solid var(--border);color:var(--text);font-family:var(--mono);font-size:.9rem;padding:.75rem 1rem;border-radius:10px;outline:none;transition:border-color .2s}
+input:focus,select:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(0,229,160,.1)}
+select option{background:var(--surface2)}
+.btn{padding:.85rem 2rem;border-radius:10px;border:none;font-family:var(--font);font-size:.9rem;font-weight:700;cursor:pointer;transition:all .2s;display:inline-flex;align-items:center;gap:.5rem}
+.btn-primary{background:var(--accent);color:#0a0f1e}
+.btn-primary:hover{background:#00ffa8;transform:translateY(-1px);box-shadow:0 4px 20px rgba(0,229,160,.4)}
+.btn-primary:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.btn-secondary{background:var(--surface2);color:var(--text);border:1px solid var(--border)}
+.btn-secondary:hover{border-color:var(--accent);color:var(--accent)}
+.btn-danger{background:rgba(244,63,94,.1);color:var(--danger);border:1px solid rgba(244,63,94,.3)}
+.btn-danger:hover{background:rgba(244,63,94,.2)}
+.btn-sm{padding:.4rem .9rem;font-size:.78rem}
+.qr-layout{display:grid;grid-template-columns:auto 1fr;gap:2rem;align-items:start}
+.qr-box{background:#fff;padding:1rem;border-radius:16px;display:flex;align-items:center;justify-content:center;min-width:200px;min-height:200px}
+.qr-info{display:flex;flex-direction:column;gap:1rem}
+.qr-meta{background:var(--surface2);border-radius:12px;padding:1rem 1.2rem;border:1px solid var(--border)}
+.qr-meta-row{display:flex;justify-content:space-between;align-items:center;padding:.4rem 0;border-bottom:1px solid var(--border);font-size:.85rem}
+.qr-meta-row:last-child{border-bottom:none}
+.qr-meta-row .key{color:var(--muted);font-family:var(--mono)}
+.qr-meta-row .val{font-weight:600}
+.timer-box{background:var(--surface2);border-radius:12px;padding:1rem 1.2rem;border:1px solid var(--border)}
+.timer-display{font-family:var(--mono);font-size:2.5rem;font-weight:500;color:var(--accent);letter-spacing:2px;line-height:1}
+.timer-label{font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-top:.3rem}
+.timer-expired{color:var(--danger)!important}
+.url-field{background:var(--surface2);border:1px dashed var(--border);border-radius:10px;padding:.75rem 1rem;font-family:var(--mono);font-size:.72rem;color:var(--accent);word-break:break-all;line-height:1.5}
+.actions{display:flex;gap:.75rem;flex-wrap:wrap}
+.live-counter{display:flex;align-items:center;gap:.75rem;background:rgba(0,229,160,.05);border:1px solid rgba(0,229,160,.2);border-radius:12px;padding:.9rem 1.2rem}
+.live-num{font-family:var(--mono);font-size:2rem;font-weight:700;color:var(--accent);line-height:1}
+.live-label{font-size:.78rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px}
+.stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:1.5rem}
+.stat-card{background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:1.2rem;text-align:center}
+.stat-num{font-size:2rem;font-weight:800;line-height:1;margin-bottom:.3rem}
+.stat-lbl{font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px}
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:.875rem}
+thead th{font-size:.7rem;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);padding:.8rem 1rem;text-align:left;border-bottom:1px solid var(--border)}
+tbody tr{border-bottom:1px solid rgba(30,45,69,.5);transition:background .15s;animation:rowIn .3s ease}
+@keyframes rowIn{from{opacity:0;transform:translateX(-8px)}to{opacity:1;transform:translateX(0)}}
+tbody tr:hover{background:var(--surface2)}
+tbody td{padding:.85rem 1rem;font-family:var(--mono);font-size:.83rem}
+.status-badge{display:inline-flex;align-items:center;gap:.35rem;font-size:.72rem;font-weight:700;padding:.25rem .7rem;border-radius:20px;font-family:var(--font)}
+.status-ok{background:rgba(0,229,160,.1);color:var(--accent);border:1px solid rgba(0,229,160,.3)}
+.status-late{background:rgba(251,191,36,.1);color:var(--warn);border:1px solid rgba(251,191,36,.3)}
+.sessions-list{display:flex;flex-direction:column;gap:.75rem}
+.session-item{display:flex;align-items:center;justify-content:space-between;background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:1rem 1.2rem;cursor:pointer;transition:all .2s}
+.session-item:hover,.session-item.selected{border-color:var(--accent);background:rgba(0,229,160,.05)}
+.session-info{display:flex;flex-direction:column;gap:.2rem}
+.session-name{font-weight:700;font-size:.95rem}
+.session-date{font-family:var(--mono);font-size:.78rem;color:var(--muted)}
+.session-count{font-family:var(--mono);font-size:.85rem;color:var(--accent);font-weight:500}
+.empty{text-align:center;padding:3rem;color:var(--muted)}
+.empty-icon{font-size:3rem;margin-bottom:1rem;opacity:.4}
+.empty-text{font-size:.9rem}
+#aluno-screen{display:none;min-height:100vh;align-items:center;justify-content:center;padding:2rem}
+#aluno-screen.visible{display:flex;flex-direction:column}
+.aluno-card{background:var(--surface);border:2px solid var(--accent);border-radius:20px;padding:2.2rem;width:100%;max-width:420px;box-shadow:0 0 60px rgba(0,229,160,.15)}
+.aula-info-box{background:var(--surface2);border-radius:12px;padding:1rem 1.2rem;margin-bottom:1.5rem;border:1px solid var(--border)}
+.aula-row{display:flex;justify-content:space-between;padding:.35rem 0;font-size:.84rem;border-bottom:1px solid var(--border)}
+.aula-row:last-child{border-bottom:none}
+.aula-row .k{color:var(--muted)}
+.aula-row .v{font-weight:700}
+.expired-banner{background:rgba(244,63,94,.1);border:1px solid rgba(244,63,94,.4);border-radius:12px;padding:1.2rem;text-align:center;color:var(--danger);font-weight:700;margin-bottom:1rem;font-size:.9rem;line-height:1.6}
+.aluno-field{display:flex;flex-direction:column;gap:.4rem;margin-bottom:1rem}
+.aluno-field label{font-size:.75rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+.aluno-field input{background:var(--surface2);border:1px solid var(--border);color:var(--text);font-family:var(--mono);font-size:.95rem;padding:.75rem 1rem;border-radius:10px;outline:none;width:100%;transition:border-color .2s}
+.aluno-field input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(0,229,160,.1)}
+.toast{position:fixed;bottom:2rem;right:2rem;background:var(--accent);color:#0a0f1e;font-family:var(--font);font-weight:700;font-size:.875rem;padding:.9rem 1.5rem;border-radius:12px;z-index:1000;transform:translateY(100px);opacity:0;transition:all .3s cubic-bezier(.34,1.56,.64,1);max-width:320px}
+.toast.show{transform:translateY(0);opacity:1}
+.toast.error{background:var(--danger);color:#fff}
+@media(max-width:680px){.form-grid{grid-template-columns:1fr}.qr-layout{grid-template-columns:1fr}.qr-box{margin:0 auto}.stats-row{grid-template-columns:1fr 1fr}header{flex-direction:column;gap:1rem;align-items:flex-start}}
 </style>
 </head>
 <body>
 
+<div id="loading-screen">
+  <div class="spinner"></div>
+  <p>Conectando ao Firebase...</p>
+</div>
+
 <!-- TELA ALUNO -->
 <div id="aluno-screen">
   <div class="aluno-card">
-    <div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:1.5rem;">
-      <div style="width:36px;height:36px;background:var(--accent);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:1rem;">📋</div>
+    <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:1.5rem">
+      <div style="width:36px;height:36px;background:var(--accent);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:1rem">📋</div>
       <div>
-        <div style="font-weight:800;font-size:1.1rem;">Pres<span style="color:var(--accent);">ença</span>QR</div>
-        <div style="font-size:0.75rem;color:var(--muted);">Registre sua presença</div>
+        <div style="font-weight:800;font-size:1.1rem">Pres<span style="color:var(--accent)">ença</span>QR</div>
+        <div style="font-size:.75rem;color:var(--muted)">Registre sua presença</div>
       </div>
     </div>
     <div id="aula-info-box" class="aula-info-box"></div>
-    <div id="expired-box" class="expired-banner" style="display:none;">⏰ QR Code expirado!<br>Peça ao professor um novo código.</div>
+    <div id="expired-box" class="expired-banner" style="display:none">⏰ QR Code expirado!<br>Peça ao professor um novo código.</div>
     <div id="aluno-form">
       <div class="aluno-field">
         <label>Nome Completo</label>
-        <input type="text" id="a-nome" placeholder="Seu nome completo" autocomplete="name" />
+        <input type="text" id="a-nome" placeholder="Seu nome completo" autocomplete="name"/>
       </div>
       <div class="aluno-field">
         <label>Matrícula</label>
-        <input type="text" id="a-matricula" placeholder="Número de matrícula" inputmode="numeric" />
+        <input type="text" id="a-matricula" placeholder="Número de matrícula" inputmode="numeric"/>
       </div>
-      <button class="btn btn-primary" onclick="confirmarPresenca()" style="width:100%;justify-content:center;margin-top:0.5rem;">✅ Confirmar Presença</button>
+      <button class="btn btn-primary" id="btn-confirmar" onclick="confirmarPresenca()" style="width:100%;justify-content:center;margin-top:.5rem">✅ Confirmar Presença</button>
     </div>
-    <div id="aluno-sucesso" style="display:none;text-align:center;padding:1rem 0;">
-      <div style="font-size:3.5rem;margin-bottom:0.75rem;">✅</div>
-      <div style="font-size:1.2rem;font-weight:800;color:var(--accent);margin-bottom:0.5rem;">Presença confirmada!</div>
-      <div style="font-size:0.83rem;color:var(--muted);" id="sucesso-detalhe"></div>
+    <div id="aluno-sucesso" style="display:none;text-align:center;padding:1rem 0">
+      <div style="font-size:3.5rem;margin-bottom:.75rem">✅</div>
+      <div style="font-size:1.2rem;font-weight:800;color:var(--accent);margin-bottom:.5rem">Presença confirmada!</div>
+      <div style="font-size:.83rem;color:var(--muted)" id="sucesso-detalhe"></div>
     </div>
   </div>
 </div>
 
 <!-- INTERFACE PROFESSOR -->
-<div id="professor-ui">
+<div id="professor-ui" style="display:none">
 <div class="container">
   <header>
     <div class="logo">
       <div class="logo-icon">📋</div>
       <div class="logo-text">Pres<span>ença</span>QR</div>
     </div>
-    <span class="badge">v2 — URL ENCODED</span>
+    <div style="display:flex;gap:.75rem;align-items:center">
+      <span class="badge badge-live">● FIREBASE</span>
+      <span class="badge">TEMPO REAL</span>
+    </div>
   </header>
-
   <div class="tabs">
     <button class="tab active" onclick="switchTab('professor')">👨‍🏫 Professor</button>
     <button class="tab" onclick="switchTab('relatorio')">📊 Relatório</button>
   </div>
 
-  <!-- PROFESSOR PANEL -->
   <div id="tab-professor" class="panel active">
     <div class="card">
       <div class="card-title">⚡ Criar nova aula</div>
       <div class="form-grid">
-        <div class="form-group"><label>Disciplina</label><input type="text" id="p-disciplina" placeholder="Ex: Matemática" /></div>
-        <div class="form-group"><label>Turma</label><input type="text" id="p-turma" placeholder="Ex: 3º A" /></div>
-        <div class="form-group"><label>Professor</label><input type="text" id="p-professor" placeholder="Seu nome" /></div>
+        <div class="form-group"><label>Disciplina</label><input type="text" id="p-disciplina" placeholder="Ex: Matemática"/></div>
+        <div class="form-group"><label>Turma</label><input type="text" id="p-turma" placeholder="Ex: 3º A"/></div>
+        <div class="form-group"><label>Professor</label><input type="text" id="p-professor" placeholder="Seu nome"/></div>
         <div class="form-group">
           <label>Validade do QR</label>
           <select id="p-validade">
@@ -179,17 +184,17 @@
           </select>
         </div>
       </div>
-      <div style="margin-top:1.2rem;">
-        <button class="btn btn-primary" onclick="gerarAula()">⚡ Gerar QR Code da Aula</button>
+      <div style="margin-top:1.2rem">
+        <button class="btn btn-primary" onclick="gerarAula()" id="btn-gerar">⚡ Gerar QR Code da Aula</button>
       </div>
     </div>
 
-    <div class="card" id="qr-card" style="display:none;">
+    <div class="card" id="qr-card" style="display:none">
       <div class="card-title">🔲 QR Code ativo</div>
       <div class="qr-layout">
         <div>
           <div class="qr-box" id="qr-container"></div>
-          <div style="margin-top:0.8rem;display:flex;gap:0.5rem;justify-content:center;">
+          <div style="margin-top:.8rem;display:flex;gap:.5rem;justify-content:center">
             <button class="btn btn-secondary btn-sm" onclick="copiarLink()">🔗 Copiar link</button>
             <button class="btn btn-secondary btn-sm" onclick="window.print()">🖨️ Imprimir</button>
           </div>
@@ -200,10 +205,16 @@
             <div class="timer-display" id="timer-display">--:--</div>
             <div class="timer-label">tempo restante</div>
           </div>
+          <div class="live-counter">
+            <div>
+              <div class="live-num" id="live-count">0</div>
+              <div class="live-label">● ao vivo — presentes</div>
+            </div>
+          </div>
           <div class="url-field" id="url-display">—</div>
           <div class="actions">
             <button class="btn btn-danger btn-sm" onclick="encerrarAula()">🔴 Encerrar</button>
-            <button class="btn btn-secondary btn-sm" onclick="verPresentes()">👥 Ver presentes</button>
+            <button class="btn btn-secondary btn-sm" onclick="verPresentes()">👥 Ver lista</button>
           </div>
         </div>
       </div>
@@ -217,7 +228,6 @@
     </div>
   </div>
 
-  <!-- RELATÓRIO PANEL -->
   <div id="tab-relatorio" class="panel">
     <div class="card">
       <div class="card-title">📊 Selecione a aula</div>
@@ -225,15 +235,15 @@
         <div class="empty"><div class="empty-icon">📊</div><div class="empty-text">Nenhuma aula disponível</div></div>
       </div>
     </div>
-    <div id="relatorio-content" style="display:none;">
+    <div id="relatorio-content" style="display:none">
       <div class="stats-row">
-        <div class="stat-card"><div class="stat-num" id="r-total" style="color:var(--accent2);">0</div><div class="stat-lbl">Presentes</div></div>
+        <div class="stat-card"><div class="stat-num" id="r-total" style="color:var(--accent2)">0</div><div class="stat-lbl">Presentes</div></div>
         <div class="stat-card"><div class="stat-num" id="r-turma">—</div><div class="stat-lbl">Turma</div></div>
-        <div class="stat-card"><div class="stat-num" id="r-disc" style="font-size:1.1rem;">—</div><div class="stat-lbl">Disciplina</div></div>
+        <div class="stat-card"><div class="stat-num" id="r-disc" style="font-size:1.1rem">—</div><div class="stat-lbl">Disciplina</div></div>
       </div>
       <div class="card">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.2rem;">
-          <div class="card-title" style="margin:0;">Lista de presença</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.2rem">
+          <div class="card-title" style="margin:0">Lista de presença</div>
           <div class="actions">
             <button class="btn btn-secondary btn-sm" onclick="exportarCSV()">⬇ CSV</button>
             <button class="btn btn-secondary btn-sm" onclick="window.print()">🖨️ Imprimir</button>
@@ -245,7 +255,7 @@
             <tbody id="presenca-tbody"></tbody>
           </table>
         </div>
-        <div id="presenca-empty" class="empty" style="display:none;"><div class="empty-icon">👥</div><div class="empty-text">Nenhum aluno registrado ainda</div></div>
+        <div id="presenca-empty" class="empty" style="display:none"><div class="empty-icon">👥</div><div class="empty-text">Nenhum aluno registrado ainda</div></div>
       </div>
     </div>
   </div>
@@ -255,305 +265,291 @@
 <div class="toast" id="toast"></div>
 
 <script>
-// ======================================================
-// ESTADO — salvo no localStorage do PROFESSOR
-// ======================================================
-let state = {
-  sessions: JSON.parse(localStorage.getItem('pqr_v2') || '[]'),
-  activeSession: null,
-  timerInterval: null,
-  selectedSession: null,
+const firebaseConfig = {
+  apiKey: "AIzaSyBEbPa8-rRA0Wx9yV-dgKJZU7M-5ZXCy40",
+  authDomain: "presence-qr-7caa5.firebaseapp.com",
+  databaseURL: "https://presence-qr-7caa5-default-rtdb.firebaseio.com",
+  projectId: "presence-qr-7caa5",
+  storageBucket: "presence-qr-7caa5.firebasestorage.app",
+  messagingSenderId: "218660985223",
+  appId: "1:218660985223:web:b58ac464c3f1d147bc5b22"
 };
-function save() { localStorage.setItem('pqr_v2', JSON.stringify(state.sessions)); }
 
-// ======================================================
-// UTILS
-// ======================================================
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+document.getElementById('loading-screen').style.display = 'none';
+
+// ===== UTILS =====
 function showToast(msg, error=false) {
   const t = document.getElementById('toast');
-  t.textContent = msg; t.className = 'toast show' + (error?' error':'');
-  setTimeout(() => t.className = 'toast', 3000);
+  t.textContent = msg; t.className = 'toast show'+(error?' error':'');
+  setTimeout(()=>t.className='toast', 3200);
 }
 function nowStr() { return new Date().toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}); }
 function genId() { return Math.random().toString(36).substring(2,8).toUpperCase(); }
-
-// ======================================================
-// CODIFICAÇÃO DA SESSÃO NA URL
-// ======================================================
-// Os dados da aula são codificados em Base64 e embutidos no QR Code.
-// Quando o aluno escaneia, o celular decodifica os dados diretamente
-// da URL — sem precisar do localStorage do professor.
 function encodeSession(s) {
-  const payload = { id:s.id, disciplina:s.disciplina, turma:s.turma, professor:s.professor, criadoEm:s.criadoEm, validade:s.validade };
-  return btoa(unescape(encodeURIComponent(JSON.stringify(payload))));
+  const p={id:s.id,disciplina:s.disciplina,turma:s.turma,professor:s.professor,criadoEm:s.criadoEm,validade:s.validade};
+  return btoa(unescape(encodeURIComponent(JSON.stringify(p))));
 }
 function decodeSession(str) {
-  try { return JSON.parse(decodeURIComponent(escape(atob(str)))); }
-  catch(e) { return null; }
+  try{return JSON.parse(decodeURIComponent(escape(atob(str))));}catch(e){return null;}
 }
-function buildURL(session) {
-  const base = window.location.href.split('?')[0];
-  return base + '?p=' + encodeSession(session);
-}
+function buildURL(session) { return window.location.href.split('?')[0]+'?p='+encodeSession(session); }
 
-// ======================================================
-// TABS
-// ======================================================
+// ===== TABS =====
 function switchTab(tab) {
-  document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', ['professor','relatorio'][i]===tab));
-  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',['professor','relatorio'][i]===tab));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
   document.getElementById('tab-'+tab).classList.add('active');
-  if (tab==='relatorio') renderRelatorioSessions();
+  if(tab==='relatorio') carregarSessoesRelatorio();
 }
 
-// ======================================================
-// PROFESSOR — gerar aula e QR
-// ======================================================
-function gerarAula() {
-  const d = document.getElementById('p-disciplina').value.trim();
-  const t = document.getElementById('p-turma').value.trim();
-  const p = document.getElementById('p-professor').value.trim();
-  const v = parseInt(document.getElementById('p-validade').value);
-  if (!d||!t||!p) { showToast('Preencha todos os campos!',true); return; }
+// ===== DETECTAR MODO =====
+const params = new URLSearchParams(window.location.search);
+const payload = params.get('p');
 
-  const session = { id:genId(), disciplina:d, turma:t, professor:p, validade:v, criadoEm:Date.now(), data:nowStr(), ativa:true, alunos:[] };
-  state.sessions.unshift(session);
-  state.activeSession = session;
-  save(); renderSessions(); renderQR(session);
-  document.getElementById('qr-card').style.display = 'block';
-  showToast('✅ QR Code gerado!');
-}
-
-function renderQR(session) {
-  const container = document.getElementById('qr-container');
-  container.innerHTML = '';
-  const url = buildURL(session);
-  document.getElementById('url-display').textContent = url;
-  new QRCode(container, { text:url, width:180, height:180, colorDark:'#0a0f1e', colorLight:'#ffffff', correctLevel:QRCode.CorrectLevel.M });
-  document.getElementById('qr-meta').innerHTML = `
-    <div class="qr-meta-row"><span class="key">ID</span><span class="val" style="color:var(--accent);letter-spacing:2px;">${session.id}</span></div>
-    <div class="qr-meta-row"><span class="key">Disciplina</span><span class="val">${session.disciplina}</span></div>
-    <div class="qr-meta-row"><span class="key">Turma</span><span class="val">${session.turma}</span></div>
-    <div class="qr-meta-row"><span class="key">Professor</span><span class="val">${session.professor}</span></div>
-    <div class="qr-meta-row"><span class="key">Criado em</span><span class="val">${session.data}</span></div>
-  `;
-  startTimer(session);
-}
-
-function startTimer(session) {
-  if (state.timerInterval) clearInterval(state.timerInterval);
-  const el = document.getElementById('timer-display');
-  if (session.validade===0) { el.textContent='∞'; return; }
-  function tick() {
-    const left = session.validade*60 - Math.floor((Date.now()-session.criadoEm)/1000);
-    if (left<=0) {
-      el.textContent='EXPIRADO'; el.classList.add('timer-expired');
-      clearInterval(state.timerInterval);
-      const s = state.sessions.find(x=>x.id===session.id);
-      if (s) { s.ativa=false; save(); renderSessions(); }
-      return;
-    }
-    el.textContent = String(Math.floor(left/60)).padStart(2,'0')+':'+String(left%60).padStart(2,'0');
-    el.classList.remove('timer-expired');
-  }
-  tick(); state.timerInterval = setInterval(tick,1000);
-}
-
-function encerrarAula() {
-  if (!state.activeSession) return;
-  const s = state.sessions.find(x=>x.id===state.activeSession.id);
-  if (s) { s.ativa=false; save(); }
-  state.activeSession=null;
-  if (state.timerInterval) clearInterval(state.timerInterval);
-  document.getElementById('qr-card').style.display='none';
-  renderSessions(); showToast('Aula encerrada.');
-}
-
-function verPresentes() {
-  if (!state.activeSession) return;
-  switchTab('relatorio');
-  setTimeout(() => selecionarRelatorio(state.activeSession.id), 100);
-}
-
-function copiarLink() {
-  navigator.clipboard.writeText(document.getElementById('url-display').textContent)
-    .then(()=>showToast('🔗 Link copiado!'))
-    .catch(()=>showToast('Copie manualmente o link abaixo.',true));
-}
-
-function renderSessions() {
-  const el = document.getElementById('sessions-list');
-  if (!state.sessions.length) { el.innerHTML='<div class="empty"><div class="empty-icon">🗂️</div><div class="empty-text">Nenhuma aula criada ainda</div></div>'; return; }
-  el.innerHTML = state.sessions.map(s=>`
-    <div class="session-item">
-      <div class="session-info">
-        <div class="session-name">${s.disciplina} — ${s.turma}</div>
-        <div class="session-date">${s.data} · Prof. ${s.professor} · <strong style="color:var(--accent)">${s.id}</strong></div>
-      </div>
-      <div style="display:flex;align-items:center;gap:0.75rem;">
-        <span class="session-count">${s.alunos.length} presente(s)</span>
-        <span class="status-badge ${s.ativa?'status-ok':''}" style="${!s.ativa?'background:rgba(100,116,139,0.1);color:var(--muted);border-color:rgba(100,116,139,0.2);':''}">${s.ativa?'● ATIVA':'○ Encerrada'}</span>
-        <button class="btn btn-danger btn-sm" onclick="deletarSessao('${s.id}',event)">🗑</button>
-      </div>
-    </div>
-  `).join('');
-}
-
-function deletarSessao(id,e) {
-  e.stopPropagation();
-  state.sessions = state.sessions.filter(s=>s.id!==id);
-  localStorage.removeItem('pqr_presenca_'+id);
-  save(); renderSessions(); renderRelatorioSessions(); showToast('Aula removida.');
-}
-
-// ======================================================
-// ALUNO — confirmar presença (roda no celular do aluno)
-// ======================================================
-function confirmarPresenca() {
-  const urlSession = window._aulaAtual;
-  if (!urlSession) return;
-  const nome = document.getElementById('a-nome').value.trim();
-  const matricula = document.getElementById('a-matricula').value.trim();
-  if (!nome||!matricula) { showToast('Preencha nome e matrícula!',true); return; }
-
-  if (urlSession.validade>0 && (Date.now()-urlSession.criadoEm)/1000/60 > urlSession.validade) {
-    document.getElementById('expired-box').style.display='block';
+if (payload) {
+  // ===== MODO ALUNO =====
+  document.getElementById('aluno-screen').classList.add('visible');
+  const session = decodeSession(payload);
+  if (!session) {
+    document.getElementById('aula-info-box').innerHTML='<div style="color:var(--danger);text-align:center;font-weight:700;padding:1rem">QR Code inválido.</div>';
     document.getElementById('aluno-form').style.display='none';
-    return;
-  }
-
-  const chave = 'pqr_presenca_'+urlSession.id;
-  const lista = JSON.parse(localStorage.getItem(chave)||'[]');
-  if (lista.find(a=>a.matricula===matricula)) { showToast('Presença já registrada!',true); return; }
-
-  const horario = new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
-  const elapsed = Math.floor((Date.now()-urlSession.criadoEm)/1000/60);
-  const status = elapsed<=5?'pontual':'atraso';
-  lista.push({nome,matricula,horario,status});
-  localStorage.setItem(chave,JSON.stringify(lista));
-
-  // Notifica professor se estiver na mesma aba/origem (BroadcastChannel)
-  try { const bc=new BroadcastChannel('pqr'); bc.postMessage({sessionId:urlSession.id,aluno:{nome,matricula,horario,status}}); bc.close(); } catch(e){}
-
-  document.getElementById('aluno-form').style.display='none';
-  document.getElementById('aluno-sucesso').style.display='block';
-  document.getElementById('sucesso-detalhe').textContent = `${urlSession.disciplina} · Turma ${urlSession.turma} · ${horario}`;
-}
-
-// ======================================================
-// RELATÓRIO — mescla presenças salvas pelos alunos
-// ======================================================
-function renderRelatorioSessions() {
-  const el = document.getElementById('relatorio-sessions');
-  if (!state.sessions.length) { el.innerHTML='<div class="empty"><div class="empty-icon">📊</div><div class="empty-text">Nenhuma aula disponível</div></div>'; return; }
-  el.innerHTML = state.sessions.map(s=>`
-    <div class="session-item ${state.selectedSession===s.id?'selected':''}" onclick="selecionarRelatorio('${s.id}')">
-      <div class="session-info">
-        <div class="session-name">${s.disciplina} — ${s.turma}</div>
-        <div class="session-date">${s.data}</div>
-      </div>
-      <span class="session-count">${s.alunos.length} aluno(s)</span>
-    </div>
-  `).join('');
-}
-
-function selecionarRelatorio(id) {
-  state.selectedSession=id; renderRelatorioSessions();
-  const session = state.sessions.find(s=>s.id===id);
-  if (!session) return;
-
-  // Mescla presenças salvas pelos alunos (via localStorage compartilhado na mesma origem)
-  const lista = JSON.parse(localStorage.getItem('pqr_presenca_'+id)||'[]');
-  lista.forEach(a => { if (!session.alunos.find(x=>x.matricula===a.matricula)) session.alunos.push(a); });
-  save();
-
-  document.getElementById('relatorio-content').style.display='block';
-  document.getElementById('r-total').textContent=session.alunos.length;
-  document.getElementById('r-turma').textContent=session.turma;
-  document.getElementById('r-disc').textContent=session.disciplina;
-
-  const tbody=document.getElementById('presenca-tbody');
-  if (!session.alunos.length) { tbody.innerHTML=''; document.getElementById('presenca-empty').style.display='block'; return; }
-  document.getElementById('presenca-empty').style.display='none';
-  tbody.innerHTML = session.alunos.map((a,i)=>`
-    <tr>
-      <td style="color:var(--muted);">${String(i+1).padStart(2,'0')}</td>
-      <td style="font-family:var(--font);font-weight:600;">${a.nome}</td>
-      <td>${a.matricula}</td>
-      <td>${a.horario}</td>
-      <td><span class="status-badge ${a.status==='pontual'?'status-ok':'status-late'}">${a.status==='pontual'?'✓ Pontual':'⚠ Atraso'}</span></td>
-      <td><button class="btn btn-danger btn-sm" onclick="removerAluno('${id}','${a.matricula}')">✕</button></td>
-    </tr>
-  `).join('');
-}
-
-function removerAluno(sessionId,matricula) {
-  const s=state.sessions.find(x=>x.id===sessionId); if(!s) return;
-  s.alunos=s.alunos.filter(a=>a.matricula!==matricula);
-  const chave='pqr_presenca_'+sessionId;
-  localStorage.setItem(chave,JSON.stringify(JSON.parse(localStorage.getItem(chave)||'[]').filter(a=>a.matricula!==matricula)));
-  save(); selecionarRelatorio(sessionId); renderSessions(); showToast('Aluno removido.');
-}
-
-function exportarCSV() {
-  const session=state.sessions.find(s=>s.id===state.selectedSession); if(!session) return;
-  let csv='Nome,Matrícula,Horário,Status\n';
-  session.alunos.forEach(a=>{ csv+=`"${a.nome}","${a.matricula}","${a.horario}","${a.status}"\n`; });
-  const a=document.createElement('a');
-  a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
-  a.download=`presenca_${session.disciplina}_${session.turma}.csv`;
-  a.click(); showToast('📥 CSV exportado!');
-}
-
-// BroadcastChannel — atualização em tempo real (mesmo domínio)
-try {
-  const bc=new BroadcastChannel('pqr');
-  bc.onmessage=(e)=>{
-    const session=state.sessions.find(s=>s.id===e.data.sessionId); if(!session) return;
-    if (!session.alunos.find(a=>a.matricula===e.data.aluno.matricula)) {
-      session.alunos.push(e.data.aluno); save(); renderSessions();
-      showToast('✅ '+e.data.aluno.nome+' registrou presença!');
-      if (state.selectedSession===e.data.sessionId) selecionarRelatorio(e.data.sessionId);
-    }
-  };
-} catch(e){}
-
-// ======================================================
-// INIT — detecta se é acesso do aluno (URL com ?p=...)
-// ======================================================
-(function init() {
-  const params = new URLSearchParams(window.location.search);
-  const payload = params.get('p');
-
-  if (payload) {
-    // MODO ALUNO
-    document.getElementById('professor-ui').style.display='none';
-    document.getElementById('aluno-screen').classList.add('visible');
-
-    const session = decodeSession(payload);
-    if (!session) {
-      document.getElementById('aula-info-box').innerHTML='<div style="color:var(--danger);text-align:center;font-weight:700;padding:1rem;">QR Code inválido ou corrompido.</div>';
-      document.getElementById('aluno-form').style.display='none';
-      return;
-    }
+  } else {
     window._aulaAtual = session;
-
     document.getElementById('aula-info-box').innerHTML=`
-      <div class="aula-info-row"><span class="k">Disciplina</span><span class="v">${session.disciplina}</span></div>
-      <div class="aula-info-row"><span class="k">Turma</span><span class="v">${session.turma}</span></div>
-      <div class="aula-info-row"><span class="k">Professor(a)</span><span class="v">${session.professor}</span></div>
-      <div class="aula-info-row"><span class="k">Validade</span><span class="v">${session.validade===0?'Sem limite':session.validade+' minutos'}</span></div>
-    `;
-
-    if (session.validade>0 && (Date.now()-session.criadoEm)/1000/60 > session.validade) {
+      <div class="aula-row"><span class="k">Disciplina</span><span class="v">${session.disciplina}</span></div>
+      <div class="aula-row"><span class="k">Turma</span><span class="v">${session.turma}</span></div>
+      <div class="aula-row"><span class="k">Professor(a)</span><span class="v">${session.professor}</span></div>
+      <div class="aula-row"><span class="k">Validade</span><span class="v">${session.validade===0?'Sem limite':session.validade+' minutos'}</span></div>`;
+    if (session.validade>0 && (Date.now()-session.criadoEm)/1000/60>session.validade) {
       document.getElementById('expired-box').style.display='block';
       document.getElementById('aluno-form').style.display='none';
     }
-  } else {
-    // MODO PROFESSOR
-    renderSessions();
   }
-})();
+} else {
+  // ===== MODO PROFESSOR =====
+  document.getElementById('professor-ui').style.display='block';
+
+  let activeSession=null, timerInterval=null, liveUnsubscribe=null, selectedSessionId=null;
+  let lastCount = -1;
+
+  // Escuta todas as sessões em tempo real
+  db.ref('sessoes').on('value', snap => {
+    const data = snap.val()||{};
+    const sessions = Object.values(data).sort((a,b)=>b.criadoEm-a.criadoEm);
+    renderSessions(sessions);
+  });
+
+  function renderSessions(sessions) {
+    const el=document.getElementById('sessions-list');
+    if(!sessions.length){el.innerHTML='<div class="empty"><div class="empty-icon">🗂️</div><div class="empty-text">Nenhuma aula criada ainda</div></div>';return;}
+    el.innerHTML=sessions.map(s=>{
+      const count=s.alunos?Object.keys(s.alunos).length:0;
+      return `<div class="session-item">
+        <div class="session-info">
+          <div class="session-name">${s.disciplina} — ${s.turma}</div>
+          <div class="session-date">${s.data} · Prof. ${s.professor} · <strong style="color:var(--accent)">${s.id}</strong></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:.75rem">
+          <span class="session-count">${count} presente(s)</span>
+          <span class="status-badge ${s.ativa?'status-ok':''}" style="${!s.ativa?'background:rgba(100,116,139,.1);color:var(--muted);border-color:rgba(100,116,139,.2);':''}">${s.ativa?'● ATIVA':'○ Encerrada'}</span>
+          <button class="btn btn-danger btn-sm" onclick="deletarSessao('${s.id}')">🗑</button>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  window.gerarAula = function() {
+    const d=document.getElementById('p-disciplina').value.trim();
+    const t=document.getElementById('p-turma').value.trim();
+    const p=document.getElementById('p-professor').value.trim();
+    const v=parseInt(document.getElementById('p-validade').value);
+    if(!d||!t||!p){showToast('Preencha todos os campos!',true);return;}
+    const btn=document.getElementById('btn-gerar');
+    btn.disabled=true; btn.textContent='Criando...';
+    const session={id:genId(),disciplina:d,turma:t,professor:p,validade:v,criadoEm:Date.now(),data:nowStr(),ativa:true};
+    db.ref('sessoes/'+session.id).set(session).then(()=>{
+      activeSession=session;
+      renderQR(session);
+      document.getElementById('qr-card').style.display='block';
+      iniciarListenerAoVivo(session.id);
+      showToast('✅ QR Code gerado!');
+    }).catch(()=>showToast('Erro ao criar aula.',true))
+    .finally(()=>{btn.disabled=false;btn.textContent='⚡ Gerar QR Code da Aula';});
+  }
+
+  function renderQR(session) {
+    const container=document.getElementById('qr-container');
+    container.innerHTML='';
+    const url=buildURL(session);
+    document.getElementById('url-display').textContent=url;
+    new QRCode(container,{text:url,width:180,height:180,colorDark:'#0a0f1e',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.M});
+    document.getElementById('qr-meta').innerHTML=`
+      <div class="qr-meta-row"><span class="key">ID</span><span class="val" style="color:var(--accent);letter-spacing:2px">${session.id}</span></div>
+      <div class="qr-meta-row"><span class="key">Disciplina</span><span class="val">${session.disciplina}</span></div>
+      <div class="qr-meta-row"><span class="key">Turma</span><span class="val">${session.turma}</span></div>
+      <div class="qr-meta-row"><span class="key">Professor</span><span class="val">${session.professor}</span></div>
+      <div class="qr-meta-row"><span class="key">Criado em</span><span class="val">${session.data}</span></div>`;
+    startTimer(session);
+  }
+
+  function startTimer(session) {
+    if(timerInterval)clearInterval(timerInterval);
+    const el=document.getElementById('timer-display');
+    if(session.validade===0){el.textContent='∞';return;}
+    function tick(){
+      const left=session.validade*60-Math.floor((Date.now()-session.criadoEm)/1000);
+      if(left<=0){
+        el.textContent='EXPIRADO';el.classList.add('timer-expired');
+        clearInterval(timerInterval);
+        db.ref('sessoes/'+session.id+'/ativa').set(false);
+        return;
+      }
+      el.textContent=String(Math.floor(left/60)).padStart(2,'0')+':'+String(left%60).padStart(2,'0');
+      el.classList.remove('timer-expired');
+    }
+    tick(); timerInterval=setInterval(tick,1000);
+  }
+
+  function iniciarListenerAoVivo(sessionId) {
+    if(liveUnsubscribe)liveUnsubscribe();
+    const refAlunos=db.ref('sessoes/'+sessionId+'/alunos');
+    refAlunos.on('value', snap=>{
+      const count=snap.exists()?Object.keys(snap.val()).length:0;
+      document.getElementById('live-count').textContent=count;
+      // notifica nova presença
+      if(count>lastCount && lastCount>=0 && snap.exists()){
+        const vals=Object.values(snap.val());
+        const ultimo=vals[vals.length-1];
+        showToast('✅ '+ultimo.nome+' registrou presença!');
+      }
+      lastCount=count;
+      // atualiza relatório se aberto
+      if(selectedSessionId===sessionId) selecionarRelatorio(sessionId);
+    });
+    liveUnsubscribe=()=>refAlunos.off();
+  }
+
+  window.encerrarAula = function() {
+    if(!activeSession)return;
+    db.ref('sessoes/'+activeSession.id+'/ativa').set(false);
+    activeSession=null; lastCount=-1;
+    if(timerInterval)clearInterval(timerInterval);
+    if(liveUnsubscribe)liveUnsubscribe();
+    document.getElementById('qr-card').style.display='none';
+    showToast('Aula encerrada.');
+  }
+
+  window.verPresentes = function() {
+    if(!activeSession)return;
+    switchTab('relatorio');
+    setTimeout(()=>selecionarRelatorio(activeSession.id),100);
+  }
+
+  window.copiarLink = function() {
+    navigator.clipboard.writeText(document.getElementById('url-display').textContent)
+      .then(()=>showToast('🔗 Link copiado!'))
+      .catch(()=>showToast('Copie o link manualmente.',true));
+  }
+
+  window.deletarSessao = function(id) {
+    if(!confirm('Remover esta aula e todas as presenças?'))return;
+    db.ref('sessoes/'+id).remove().then(()=>showToast('Aula removida.'));
+  }
+
+  // ===== RELATÓRIO =====
+  function carregarSessoesRelatorio() {
+    db.ref('sessoes').once('value').then(snap=>{
+      const data=snap.val()||{};
+      const sessions=Object.values(data).sort((a,b)=>b.criadoEm-a.criadoEm);
+      const el=document.getElementById('relatorio-sessions');
+      if(!sessions.length){el.innerHTML='<div class="empty"><div class="empty-icon">📊</div><div class="empty-text">Nenhuma aula disponível</div></div>';return;}
+      el.innerHTML=sessions.map(s=>{
+        const count=s.alunos?Object.keys(s.alunos).length:0;
+        return `<div class="session-item ${selectedSessionId===s.id?'selected':''}" onclick="selecionarRelatorio('${s.id}')">
+          <div class="session-info"><div class="session-name">${s.disciplina} — ${s.turma}</div><div class="session-date">${s.data}</div></div>
+          <span class="session-count">${count} aluno(s)</span>
+        </div>`;
+      }).join('');
+    });
+  }
+
+  window.selecionarRelatorio = function(id) {
+    selectedSessionId=id;
+    db.ref('sessoes/'+id).once('value').then(snap=>{
+      const session=snap.val(); if(!session)return;
+      const alunos=session.alunos?Object.entries(session.alunos).map(([k,v])=>({...v,key:k})).sort((a,b)=>a.timestamp-b.timestamp):[];
+      document.getElementById('relatorio-content').style.display='block';
+      document.getElementById('r-total').textContent=alunos.length;
+      document.getElementById('r-turma').textContent=session.turma;
+      document.getElementById('r-disc').textContent=session.disciplina;
+      const tbody=document.getElementById('presenca-tbody');
+      if(!alunos.length){tbody.innerHTML='';document.getElementById('presenca-empty').style.display='block';return;}
+      document.getElementById('presenca-empty').style.display='none';
+      tbody.innerHTML=alunos.map((a,i)=>`
+        <tr>
+          <td style="color:var(--muted)">${String(i+1).padStart(2,'0')}</td>
+          <td style="font-family:var(--font);font-weight:600">${a.nome}</td>
+          <td>${a.matricula}</td>
+          <td>${a.horario}</td>
+          <td><span class="status-badge ${a.status==='pontual'?'status-ok':'status-late'}">${a.status==='pontual'?'✓ Pontual':'⚠ Atraso'}</span></td>
+          <td><button class="btn btn-danger btn-sm" onclick="removerAluno('${id}','${a.key}')">✕</button></td>
+        </tr>`).join('');
+      window._currentSession={...session,alunos};
+    });
+  }
+
+  window.removerAluno = function(sessionId, key) {
+    db.ref('sessoes/'+sessionId+'/alunos/'+key).remove().then(()=>{
+      selecionarRelatorio(sessionId); showToast('Aluno removido.');
+    });
+  }
+
+  window.exportarCSV = function() {
+    const s=window._currentSession; if(!s)return;
+    let csv='Nome,Matrícula,Horário,Status\n';
+    s.alunos.forEach(a=>{csv+=`"${a.nome}","${a.matricula}","${a.horario}","${a.status}"\n`;});
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+    a.download=`presenca_${s.disciplina}_${s.turma}.csv`;
+    a.click(); showToast('📥 CSV exportado!');
+  }
+}
+
+// ===== CONFIRMAR PRESENÇA (aluno) =====
+window.confirmarPresenca = function() {
+  const s=window._aulaAtual; if(!s)return;
+  const nome=document.getElementById('a-nome').value.trim();
+  const matricula=document.getElementById('a-matricula').value.trim();
+  if(!nome||!matricula){showToast('Preencha nome e matrícula!',true);return;}
+  if(s.validade>0&&(Date.now()-s.criadoEm)/1000/60>s.validade){
+    document.getElementById('expired-box').style.display='block';
+    document.getElementById('aluno-form').style.display='none'; return;
+  }
+  const btn=document.getElementById('btn-confirmar');
+  btn.disabled=true; btn.textContent='Salvando...';
+  // Verifica duplicata
+  db.ref('sessoes/'+s.id+'/alunos').once('value').then(snap=>{
+    if(snap.exists()){
+      const dup=Object.values(snap.val()).find(a=>a.matricula===matricula);
+      if(dup){showToast('Presença já registrada!',true);btn.disabled=false;btn.textContent='✅ Confirmar Presença';return;}
+    }
+    const horario=new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+    const elapsed=Math.floor((Date.now()-s.criadoEm)/1000/60);
+    const status=elapsed<=5?'pontual':'atraso';
+    return db.ref('sessoes/'+s.id+'/alunos').push({nome,matricula,horario,status,timestamp:Date.now()});
+  }).then(ref=>{
+    if(!ref)return;
+    document.getElementById('aluno-form').style.display='none';
+    document.getElementById('aluno-sucesso').style.display='block';
+    document.getElementById('sucesso-detalhe').textContent=`${s.disciplina} · Turma ${s.turma} · ${new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}`;
+  }).catch(()=>{
+    showToast('Erro ao salvar. Verifique sua conexão.',true);
+    btn.disabled=false; btn.textContent='✅ Confirmar Presença';
+  });
+}
 </script>
 </body>
 </html>
