@@ -518,6 +518,39 @@ if (payload) {
   }
 }
 
+// ===== DEVICE FINGERPRINT =====
+// Gera um ID único e estável para o dispositivo/navegador do aluno.
+// Combina várias características do hardware e browser para criar um hash.
+// Fica salvo no localStorage do aluno para persistir entre sessões.
+function getDeviceId() {
+  const stored = localStorage.getItem('pqr_device_id');
+  if (stored) return stored;
+  const nav = window.navigator;
+  const screen = window.screen;
+  const raw = [
+    nav.userAgent,
+    nav.language,
+    nav.hardwareConcurrency,
+    nav.deviceMemory||'',
+    screen.width+'x'+screen.height,
+    screen.colorDepth,
+    nav.platform,
+    new Date().getTimezoneOffset(),
+    nav.cookieEnabled,
+    typeof nav.getBattery,
+    nav.maxTouchPoints||0,
+  ].join('|');
+  // Hash simples djb2
+  let hash = 5381;
+  for (let i=0; i<raw.length; i++) {
+    hash = ((hash<<5)+hash) ^ raw.charCodeAt(i);
+    hash = hash & 0xffffffff;
+  }
+  const id = Math.abs(hash).toString(36) + Date.now().toString(36);
+  localStorage.setItem('pqr_device_id', id);
+  return id;
+}
+
 // ===== CONFIRMAR PRESENÇA (aluno) =====
 window.confirmarPresenca = function() {
   const s=window._aulaAtual; if(!s)return;
@@ -529,17 +562,31 @@ window.confirmarPresenca = function() {
     document.getElementById('aluno-form').style.display='none'; return;
   }
   const btn=document.getElementById('btn-confirmar');
-  btn.disabled=true; btn.textContent='Salvando...';
-  // Verifica duplicata
+  btn.disabled=true; btn.textContent='Verificando...';
+
+  const deviceId = getDeviceId();
+
   db.ref('sessoes/'+s.id+'/alunos').once('value').then(snap=>{
     if(snap.exists()){
-      const dup=Object.values(snap.val()).find(a=>a.matricula===matricula);
-      if(dup){showToast('Presença já registrada!',true);btn.disabled=false;btn.textContent='✅ Confirmar Presença';return;}
+      const lista = Object.values(snap.val());
+
+      // Bloqueia mesma matrícula (independente do dispositivo)
+      if(lista.find(a=>a.matricula===matricula)){
+        showToast('Esta matrícula já registrou presença!',true);
+        btn.disabled=false; btn.textContent='✅ Confirmar Presença'; return;
+      }
+
+      // Bloqueia mesmo dispositivo (independente da matrícula)
+      if(lista.find(a=>a.deviceId===deviceId)){
+        showToast('Este dispositivo já registrou presença nesta aula!',true);
+        btn.disabled=false; btn.textContent='✅ Confirmar Presença'; return;
+      }
     }
+
     const horario=new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
     const elapsed=Math.floor((Date.now()-s.criadoEm)/1000/60);
     const status=elapsed<=5?'pontual':'atraso';
-    return db.ref('sessoes/'+s.id+'/alunos').push({nome,matricula,horario,status,timestamp:Date.now()});
+    return db.ref('sessoes/'+s.id+'/alunos').push({nome,matricula,horario,status,deviceId,timestamp:Date.now()});
   }).then(ref=>{
     if(!ref)return;
     document.getElementById('aluno-form').style.display='none';
